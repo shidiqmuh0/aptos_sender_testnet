@@ -13,7 +13,7 @@ logger.add(stderr, format="<white>{time:HH:mm:ss}</white>"
                           " | <cyan>{line}</cyan>"
                           " - <white>{message}</white>")
 
-NODE_URL = getenv("APTOS_NODE_URL", "https://fullnode.mainnet.aptoslabs.com/v1")
+NODE_URL = getenv("APTOS_NODE_URL", "https://fullnode.testnet.aptoslabs.com/v1")
 REST_CLIENT = RestClient(NODE_URL)
 
 
@@ -24,7 +24,7 @@ class App:
             current_account = Account.load_key(key=private_key)
 
         except ValueError:
-            logger.error(f'{private_key} | Невалидный Private Key')
+            logger.error(f'{private_key} | Invalid Private Key')
             return
 
         while True:
@@ -33,7 +33,7 @@ class App:
                 gas_price = 54100
 
                 if account_balance <= gas_price:
-                    logger.info(f'{private_key} | Маленький баланс: {account_balance / 100000000}')
+                    logger.info(f'{private_key} | Small balance: {account_balance / 100000000}')
                     return
 
                 tx_hash = REST_CLIENT.transfer(sender=current_account,
@@ -59,7 +59,7 @@ class App:
             current_account = Account.load_key(key=main_private_key)
 
         except ValueError:
-            logger.error(f'{wallet} | Невалидный Private Key')
+            logger.error(f'{wallet} | Invalid Private Key')
             return
 
         while True:
@@ -68,7 +68,7 @@ class App:
                 gas_price = 54100
 
                 if account_balance <= to_wallets_value + gas_price:
-                    logger.info(f'{wallet} | Маленький баланс: {account_balance / 100000000}')
+                    logger.info(f'{wallet} | Small balance: {account_balance / 100000000}')
                     return
 
                 tx_hash = REST_CLIENT.transfer(sender=current_account,
@@ -82,10 +82,10 @@ class App:
 
                 if 'INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE' in str(error):
                     if account_balance:
-                        logger.error(f'{wallet} | Маленький баланс: {account_balance / 100000000}')
+                        logger.error(f'{wallet} | Small balance: {account_balance / 100000000}')
 
                     else:
-                        logger.error(f'{wallet} | Маленький баланс')
+                        logger.error(f'{wallet} | Small balance')
 
                     return
 
@@ -109,31 +109,31 @@ def send_to_other_wrapper(wallet: str):
 
 
 if __name__ == '__main__':
-    threads = int(input('Введите количество потоков: '))
-    user_action = int(input('1. Собрать APT на один кошелек\n'
-                            '2. Раскидать APT с одного кошелька\n'
-                            'Введите ваше действие: '))
+    threads = int(input('Enter the number of threads: '))
+    user_action = int(input('1. Collect APT for one wallet\n'
+                            '2. Scatter APT from one wallet\n'
+                            'Enter your action: '))
 
     if user_action == 1:
-        main_wallet = input('Введите основной кошелек: ')
+        main_wallet = input('Enter main wallet: ')
 
         with open('private_keys.txt', 'r', encoding='utf-8-sig') as file:
             private_keys = [row.strip() for row in file]
 
-        logger.info(f'Успешно загружено {len(private_keys)} private key\'s')
+        logger.info(f'Uploaded successfully {len(private_keys)} private key\'s')
 
         with Pool(processes=threads) as executor:
             executor.map(send_to_one_wrapper, private_keys)
 
     elif user_action == 2:
-        main_private_key = input('Введите Private Key основного кошелька: ')
-        to_wallets_value = int(float(input('Введите сумму токенов для отправки (число с плавающей точкой): '))
+        main_private_key = input('Enter the Private Key of the main wallet: ')
+        to_wallets_value = int(float(input('Enter the amount of tokens to send (float): '))
                                * 100000000)
 
         with open('wallets.txt', 'r', encoding='utf-8-sig') as file:
             wallets = [row.strip() for row in file]
 
-        logger.info(f'Успешно загружено {len(wallets)} wallet\'s')
+        logger.info(f'Successfully uploaded {len(wallets)} wallet\'s')
 
         with Pool(processes=threads) as executor:
             executor.map(send_to_other_wrapper, wallets)
