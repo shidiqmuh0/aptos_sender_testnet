@@ -1,6 +1,4 @@
 # aptos_sender_testnet
-test
-
 
 install python
 
